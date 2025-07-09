@@ -103,6 +103,20 @@ void *my_malloc(size_t size) {
   metadata = best_fit;
   prev = best_fit_prev;
 
+  //worstfit
+  // my_metadata_t *worst_fit = NULL;
+  // my_metadata_t *worst_fit_prev = NULL;
+  // while (metadata) {
+  //   if (metadata->size >= size && (best_fit == NULL || metadata->size > best_fit->size )){
+  //     worst_fit = metadata;
+  //     worst_fit_prev = prev;
+  //   }
+  //   prev = metadata;
+  //   metadata = metadata->next;
+  // }
+  // metadata = worst_fit;
+  // prev = worst_fit_prev;
+
     
   if (!metadata) {
     // There was no free slot available. We need to request a new memory region
