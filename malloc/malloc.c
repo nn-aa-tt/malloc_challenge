@@ -98,6 +98,8 @@ void *my_malloc(size_t size) {
     prev = metadata;
     metadata = metadata->next;
   }
+  metadata = best_fit
+    
   if (!metadata) {
     // There was no free slot available. We need to request a new memory region
     // from the system by calling mmap_from_system().
