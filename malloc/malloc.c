@@ -96,9 +96,14 @@ void *my_malloc(size_t size) {
   my_metadata_t *best_fit_prev = NULL;
   my_metadata_t *metadata = my_heap.free_head[0];
   my_metadata_t *prev = NULL;
+
+  int best_bin = 0;
+
   for (int i = 0; i < bin_count; i++){
     my_metadata_t *metadata = my_heap.free_head[i];
     my_metadata_t *prev = NULL;
+
+
     // First-fit: Find the first free slot the object fits.
     // TODO: Update this logic to Best-fit!
 
@@ -117,16 +122,16 @@ void *my_malloc(size_t size) {
       if (metadata->size >= size && (best_fit == NULL || metadata->size < best_fit->size )){
         best_fit = metadata;
         best_fit_prev = prev;
+        best_bin = i;
       }
       prev = metadata;
       metadata = metadata->next;
     }
-    if(best_fit){
-        break;
-    }
   }
+
   metadata = best_fit;
   prev = best_fit_prev;
+
   //worstfit
   // my_metadata_t *worst_fit = NULL;
   // my_metadata_t *worst_fit_prev = NULL;
@@ -169,7 +174,7 @@ void *my_malloc(size_t size) {
   void *ptr = metadata + 1;
   size_t remaining_size = metadata->size - size;
   // Remove the free slot from the free list.
-  my_remove_from_free_list(metadata, prev, bin_index);
+  my_remove_from_free_list(metadata, prev, best_bin);
 
   if (remaining_size > sizeof(my_metadata_t)) {
     // Shrink the metadata for the allocated object
