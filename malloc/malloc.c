@@ -120,6 +120,9 @@ void *my_malloc(size_t size) {
       }
       prev = metadata;
       metadata = metadata->next;
+      if(best_fit){
+        break;
+      }
     }
   }
   metadata = best_fit;
