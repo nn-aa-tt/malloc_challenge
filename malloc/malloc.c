@@ -30,10 +30,15 @@ typedef struct my_metadata_t {
   struct my_metadata_t *next;
 } my_metadata_t;
 
+#define bin_count 2
+
+
 typedef struct my_heap_t {
-  my_metadata_t *free_head;
-  my_metadata_t dummy;
+  my_metadata_t *free_head[bin_count];
+  my_metadata_t dummy[bin_count];
 } my_heap_t;
+
+
 
 //
 // Static variables (DO NOT ADD ANOTHER STATIC VARIABLES!)
@@ -46,15 +51,19 @@ my_heap_t my_heap;
 
 void my_add_to_free_list(my_metadata_t *metadata) {
   assert(!metadata->next);
-  metadata->next = my_heap.free_head;
-  my_heap.free_head = metadata;
+  int bin_index = 0;
+  if(metadata->size > 2048){
+    int bin_index = 1;
+  }
+  metadata->next = my_heap.free_head[bin_index];
+  my_heap.free_head[bin_index] = metadata;
 }
 
-void my_remove_from_free_list(my_metadata_t *metadata, my_metadata_t *prev) {
+void my_remove_from_free_list(my_metadata_t *metadata, my_metadata_t *prev, int bin_index) {
   if (prev) {
     prev->next = metadata->next;
   } else {
-    my_heap.free_head = metadata->next;
+    my_heap.free_head[bin_index] = metadata->next;
   }
   metadata->next = NULL;
 }
@@ -65,9 +74,11 @@ void my_remove_from_free_list(my_metadata_t *metadata, my_metadata_t *prev) {
 
 // This is called at the beginning of each challenge.
 void my_initialize() {
-  my_heap.free_head = &my_heap.dummy;
-  my_heap.dummy.size = 0;
-  my_heap.dummy.next = NULL;
+  for (int i = 0; i < bin_count; i++){
+    my_heap.free_head[i] = &my_heap.dummy;
+    my_heap.dummy[i].size = 0;
+    my_heap.dummy[i].next = NULL;
+  }
 }
 
 // my_malloc() is called every time an object is allocated.
@@ -75,34 +86,44 @@ void my_initialize() {
 // 4000. You are not allowed to use any library functions other than
 // mmap_from_system() / munmap_to_system().
 void *my_malloc(size_t size) {
-  my_metadata_t *metadata = my_heap.free_head;
-  my_metadata_t *prev = NULL;
-  // First-fit: Find the first free slot the object fits.
-  // TODO: Update this logic to Best-fit!
 
-  //firstfit
-  // while (metadata && metadata->size < size) {
-  //   prev = metadata;
-  //   metadata = metadata->next;
-  // }
+  int bin_index = 0;
+  if (size > 2048){
+    bin_index = 1;
+  }
 
-  // now, metadata points to the first free slot
-  // and prev is the previous entry.
-
-  //bestfit
   my_metadata_t *best_fit = NULL;
   my_metadata_t *best_fit_prev = NULL;
-  while (metadata) {
-    if (metadata->size >= size && (best_fit == NULL || metadata->size < best_fit->size )){
-      best_fit = metadata;
-      best_fit_prev = prev;
+  my_metadata_t *metadata = my_heap.free_head[0];
+  my_metadata_t *prev = NULL;
+  for (int i = 0; i < bin_count; i++){
+    my_metadata_t *metadata = my_heap.free_head[bin_index];
+    my_metadata_t *prev = NULL;
+    // First-fit: Find the first free slot the object fits.
+    // TODO: Update this logic to Best-fit!
+
+    //firstfit
+    // while (metadata && metadata->size < size) {
+    //   prev = metadata;
+    //   metadata = metadata->next;
+    // }
+
+    // now, metadata points to the first free slot
+    // and prev is the previous entry.
+
+    //bestfit
+    
+    while (metadata) {
+      if (metadata->size >= size && (best_fit == NULL || metadata->size < best_fit->size )){
+        best_fit = metadata;
+        best_fit_prev = prev;
+      }
+      prev = metadata;
+      metadata = metadata->next;
     }
-    prev = metadata;
-    metadata = metadata->next;
   }
   metadata = best_fit;
   prev = best_fit_prev;
-
   //worstfit
   // my_metadata_t *worst_fit = NULL;
   // my_metadata_t *worst_fit_prev = NULL;
@@ -145,7 +166,7 @@ void *my_malloc(size_t size) {
   void *ptr = metadata + 1;
   size_t remaining_size = metadata->size - size;
   // Remove the free slot from the free list.
-  my_remove_from_free_list(metadata, prev);
+  my_remove_from_free_list(metadata, prev, bin_index);
 
   if (remaining_size > sizeof(my_metadata_t)) {
     // Shrink the metadata for the allocated object
