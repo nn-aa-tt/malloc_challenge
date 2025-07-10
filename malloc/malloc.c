@@ -53,7 +53,7 @@ void my_add_to_free_list(my_metadata_t *metadata) {
   assert(!metadata->next);
   int bin_index = 0;
   if(metadata->size > 2048){
-    int bin_index = 1;
+    bin_index = 1;
   }
   metadata->next = my_heap.free_head[bin_index];
   my_heap.free_head[bin_index] = metadata;
